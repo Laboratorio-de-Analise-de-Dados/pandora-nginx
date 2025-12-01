@@ -32,7 +32,7 @@ jobs:
             cd pandora-nginx
 
             echo "⚙️ Copiando configs para o container Nginx..."
-            docker cp conf.d/. pandora_nginx:/etc/nginx/conf.d/
+            docker cp nginx/. pandora_nginx:/etc/nginx/conf.d/
 
             echo "🔄 Recarregando Nginx..."
             docker exec pandora_nginx nginx -s reload
