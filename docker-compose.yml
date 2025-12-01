@@ -8,7 +8,7 @@ services:
       - "81:80"
       - "443:443"
     volumes:
-      - ./conf.d:/etc/nginx/conf.d:ro
+      - ./nginx:/etc/nginx/conf.d
       - /srv/pandora/certbot/conf:/etc/letsencrypt
     networks:
       - pandora_net
