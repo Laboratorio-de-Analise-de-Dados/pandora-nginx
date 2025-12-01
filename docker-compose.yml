@@ -1,20 +1,6 @@
 version: "3.8"
 
 services:
-  nginx:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: pandora_nginx
-    ports:
-      - "81:80"
-      - "443:443"
-    volumes:
-      - /srv/pandora/certbot/conf:/etc/letsencrypt:ro
-    networks:
-      - pandora_net
-    restart: always
-
   certbot:
     image: certbot/dns-cloudflare
     container_name: certbot
@@ -32,6 +18,22 @@ services:
                -d app.project-pandora.com.br
                -m ${CERTBOT_EMAIL}
                --agree-tos --no-eff-email
+
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pandora_nginx
+    ports:
+      - "81:80"
+      - "443:443"
+    volumes:
+      - /srv/pandora/certbot/conf:/etc/letsencrypt:ro
+    networks:
+      - pandora_net
+    restart: always
+    depends_on:
+      - certbot
 
 networks:
   pandora_net:
