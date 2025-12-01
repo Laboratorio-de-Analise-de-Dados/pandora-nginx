@@ -27,7 +27,8 @@ jobs:
             set -e
             echo "📥 Clonando repo pandora-nginx..."
             rm -rf pandora-nginx
-            git clone git@github.com:Laboratorio-de-Analise-de-Dados/pandora-nginx.git pandora-nginx
+            git clone git@github.com-pandora-nginx:Laboratorio-de-Analise-de-Dados/pandora-nginx.git 
+
             cd pandora-nginx
 
             echo "⚙️ Copiando configs para o container Nginx..."
