@@ -1,0 +1,37 @@
+version: "3.8"
+
+services:
+  nginx:
+    image: nginx:latest
+    container_name: pandora_nginx
+    ports:
+      - "81:80"
+      - "443:443"
+    volumes:
+      - ./conf.d:/etc/nginx/conf.d:ro
+      - /srv/pandora/certbot/conf:/etc/letsencrypt
+    networks:
+      - pandora_net
+    restart: always
+
+  certbot:
+    image: certbot/dns-cloudflare
+    container_name: certbot
+    volumes:
+      - /srv/pandora/certbot/conf:/etc/letsencrypt
+      - /srv/pandora/certbot/logs:/var/log/letsencrypt
+    environment:
+      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL}
+    command: >
+      certonly --dns-cloudflare
+               --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
+               --dns-cloudflare-propagation-seconds 60
+               -d api.project-pandora.com.br
+               -d app.project-pandora.com.br
+               -m ${CERTBOT_EMAIL}
+               --agree-tos --no-eff-email
+
+networks:
+  pandora_net:
+    external: true
