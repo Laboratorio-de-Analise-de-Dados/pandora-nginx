@@ -31,8 +31,7 @@ jobs:
 
             cd pandora-nginx
 
-            echo "🔄 Recarregando Nginx..."
-            docker exec pandora_nginx nginx -s reload
+            docker-compose -f docker-compose.yml up -d --build nginx
 
             echo "🧹 Limpando diretório clonado..."
             cd ..
