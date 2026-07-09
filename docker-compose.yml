@@ -1,39 +1,52 @@
-version: "3.8"
-
 services:
   certbot:
     image: certbot/dns-cloudflare
-    container_name: certbot
-    volumes:
-      - /srv/pandora/certbot/conf:/etc/letsencrypt
-      - /srv/pandora/certbot/logs:/var/log/letsencrypt
+    container_name: pandora_certbot
+    restart: always
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
       - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
       - CERTBOT_EMAIL=${CERTBOT_EMAIL}
-    command: >
-      certonly --dns-cloudflare
-               --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini
-               --dns-cloudflare-propagation-seconds 60
-               -d api.project-pandora.com.br
-               -d app.project-pandora.com.br
-               -m ${CERTBOT_EMAIL}
-               --agree-tos --no-eff-email
+      - CERT_DOMAINS=api.project-pandora.com.br app.project-pandora.com.br
+    volumes:
+      - certbot_conf:/etc/letsencrypt
+      - certbot_logs:/var/log/letsencrypt
+      - ./certbot/entrypoint.sh:/entrypoint.sh:ro
+    healthcheck:
+      # saudável só quando os dois certificados existirem — trava o start do nginx até lá
+      test:
+        [
+          "CMD-SHELL",
+          "test -f /etc/letsencrypt/live/api.project-pandora.com.br/fullchain.pem && test -f /etc/letsencrypt/live/app.project-pandora.com.br/fullchain.pem",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 30s
 
   nginx:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: pandora_nginx
+    restart: always
+    # recarrega a cada 6h pra pegar certificado renovado, sem derrubar o serviço
+    command: >
+      /bin/sh -c "while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g 'daemon off;'"
     ports:
-      - "81:80"
+      - "80:80"
       - "443:443"
     volumes:
-      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_conf:/etc/letsencrypt:ro
     networks:
       - pandora_net
-    restart: always
     depends_on:
-      - certbot
+      certbot:
+        condition: service_healthy
+
+volumes:
+  certbot_conf:
+  certbot_logs:
 
 networks:
   pandora_net:
