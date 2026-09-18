@@ -34,11 +34,11 @@ docker compose exec nginx nginx -s reload   # reload sem derrubar
 - O nginx só sobe depois do healthcheck do certbot — os dois certificados
   precisam existir em `/etc/letsencrypt/live/<dominio>/`.
 
-## Deploy — release versionada (ADR-0001)
+## Deploy — release versionada (ADR-0001, em `pandora-docs/adr/nginx/`)
 
 Deploy **não** sai de push: dispara ao **publicar uma Release** na UI do
 GitHub (a tag `v*` é criada no publish; tag avulsa não deploya), mesmo
-padrão do ADR-0022 do backend. `release.yml` copia os arquivos via scp
+padrão do ADR-0022 do backend (em `pandora-docs/adr/backend/`). `release.yml` copia os arquivos via scp
 para `/opt/pandora/nginx` e sobe certbot + nginx; `rollback.yml`
 restaura uma tag por `workflow_dispatch`; `ci.yml` valida PR/push
 (`compose config`, `nginx -t` com certs dummy, build da imagem). Tudo

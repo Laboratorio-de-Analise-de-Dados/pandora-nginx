@@ -1,6 +1,6 @@
 ---
 name: prd-adr
-description: Criar PRD (docs/prd/NG-XX) ou ADR (docs/adr/XXXX) seguindo as convenções do pandora-nginx
+description: Criar PRD (pandora-docs/prd/NG-XX) ou ADR sensível (pandora-docs/adr/nginx/) seguindo as convenções do ecossistema
 argument-hint: "[prd|adr] <tema da entrega ou decisão>"
 allowed-tools:
   - read
@@ -9,16 +9,22 @@ allowed-tools:
   - glob
 ---
 
-Documentar uma entrega (PRD) ou uma decisão arquitetural (ADR) neste repo.
+Documentar uma entrega (PRD) ou uma decisão arquitetural (ADR) do gateway.
+
+**Docs duráveis vivem no repo privado `pandora-docs`** (repo irmão:
+`../pandora-docs`) — este repo é público, então nada de doc com
+requisito/decisão é commitado aqui.
 
 Regra de bolso: PRD registra **o que** a entrega faz; ADR registra **por que**
 uma decisão foi tomada. Decisões de produto do Pandora (gates, experimentos)
-NÃO vão aqui — ficam em `pandora-backend/docs/` e são referenciadas por nome.
+NÃO vão aqui — ficam em `pandora-docs/prd/`/`adr/backend/` e são
+referenciadas por nome.
 
 ## PRD — procedimento
 
-1. Descobrir o próximo número: `glob docs/prd/NG-*.md`, pegar o maior + 1.
-2. Criar `docs/prd/NG-XX-<slug-kebab>.md` em PT-BR, com o formato:
+1. Descobrir o próximo número: `glob ../pandora-docs/prd/NG-*.md`, pegar o
+   maior + 1.
+2. Criar `../pandora-docs/prd/NG-XX-<slug-kebab>.md` em PT-BR, com o formato:
 
 ```markdown
 # NG-XX — Título descritivo
@@ -38,11 +44,6 @@ O problema concreto, com o comportamento observado hoje.
 
 - comportamento esperado, regras, edge cases
 
-## Arquivos a tocar
-
-- caminhos reais + o que muda em cada um (incluir mudanças fora do repo —
-  ex.: settings da zone no Cloudflare — como item próprio)
-
 ## Critérios de aceite
 
 - [ ] checklist verificável
@@ -52,19 +53,25 @@ O problema concreto, com o comportamento observado hoje.
 - o que fica explicitamente de fora
 ```
 
-3. Consultar `docs/prd/NG-02-hardening-da-borda.md` como referência de tom.
-4. Adicionar linha na tabela de `docs/prd/README.md`.
+3. Consultar `../pandora-docs/prd/NG-02-hardening-da-borda.md` como
+   referência de tom.
+4. Adicionar linha na tabela de `../pandora-docs/prd/README.md`.
+5. Commitar no `pandora-docs` (mesmo padrão de branch/commit dos demais).
 
 ## ADR — procedimento
 
-1. Descobrir o próximo número: `glob docs/adr/*.md`, pegar o maior + 1
-   (formato `000X`, 4 dígitos).
-2. Estrutura de `docs/adr/0001-*.md`: Status, Data (AAAA-MM-DD), Contexto do
-   código, Contexto (problema observado), Decisão, Alternativas consideradas
-   (cada uma com o motivo do descarte), Consequências.
+ADRs do nginx são quase todos de infra → vão em
+`../pandora-docs/adr/nginx/` (sensível por definição). Se surgir ADR
+puramente de convenção de código, avalie com o usuário.
+
+1. Descobrir o próximo número: `glob ../pandora-docs/adr/nginx/*.md`, pegar
+   o maior + 1 (formato `000X`, 4 dígitos).
+2. Estrutura: Status, Data (AAAA-MM-DD), Contexto do código, Contexto
+   (problema observado), Decisão, Alternativas consideradas (cada uma com o
+   motivo do descarte), Consequências.
 3. **Nunca editar ADR aceito.** Decisão nova = ADR novo com
    `Substitui ADR-XXXX` e o antigo passa a `Substituído por ADR-YYYY`.
-4. Adicionar linha na tabela de ADRs em `docs/prd/README.md`.
+4. Adicionar linha na tabela de `../pandora-docs/adr/README.md`.
 
 ## Convenções de escrita
 
