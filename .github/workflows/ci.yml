@@ -1,0 +1,49 @@
+name: ✅ CI — validação do gateway
+
+# Portão de qualidade: roda em PR e push para main. O deploy NÃO sai daqui
+# — ele dispara ao publicar uma Release (ver release.yml e ADR-0001).
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Compose válido
+        env:
+          CLOUDFLARE_API_TOKEN: ci-dummy
+          CERTBOT_EMAIL: ci@example.com
+        run: docker compose config --quiet
+
+      - name: Sintaxe do entrypoint do certbot
+        run: sh -n certbot/entrypoint.sh
+
+      - name: Gera certificados dummy para o nginx -t
+        run: |
+          for d in api.project-pandora.com.br app.project-pandora.com.br; do
+            mkdir -p "certs/live/$d"
+            openssl req -x509 -newkey rsa:2048 -nodes -days 1 \
+              -keyout "certs/live/$d/privkey.pem" \
+              -out "certs/live/$d/fullchain.pem" \
+              -subj "/CN=$d"
+          done
+
+      # --add-host resolve os upstreams (pandora_web/pandora_frontend) que
+      # só existem na pandora_net; certs dummy satisfazem os ssl_certificate.
+      - name: nginx -t (mesma versão pinada do Dockerfile)
+        run: |
+          docker run --rm \
+            --add-host pandora_web:127.0.0.1 \
+            --add-host pandora_frontend:127.0.0.1 \
+            -v "$PWD/nginx:/etc/nginx/conf.d:ro" \
+            -v "$PWD/certs:/etc/letsencrypt:ro" \
+            nginx:1.28.0 nginx -t
+
+      - name: Build da imagem
+        run: docker build -t pandora-nginx:ci .

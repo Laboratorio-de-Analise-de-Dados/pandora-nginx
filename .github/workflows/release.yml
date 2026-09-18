@@ -1,0 +1,67 @@
+name: 🚀 Deploy Pandora Gateway (Nginx + Certbot)
+
+# Deploy da camada de borda (proxy reverso + TLS automático).
+# Dispara ao PUBLICAR uma Release na UI do GitHub (a tag v* é criada no
+# publish; tag avulsa não deploya) — push na main NÃO deploya (ADR-0001).
+# workflow_dispatch redeploya o ref selecionado.
+# O servidor recebe os arquivos via scp e sobe certbot + nginx com docker
+# compose. O certbot emite/renova os certificados sozinho (DNS-01
+# Cloudflare); o nginx recarrega a cada 6h pra pegar as renovações.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout código (tag da release / ref do dispatch)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name || github.ref }}
+
+      - name: Copia os arquivos pro servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "docker-compose.yml,Dockerfile,nginx/*,certbot/*"
+          target: "/opt/pandora/nginx"
+
+      - name: Sobe certbot + nginx
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CERTBOT_EMAIL: ${{ secrets.CERTBOT_EMAIL }}
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          envs: CLOUDFLARE_API_TOKEN,CERTBOT_EMAIL
+          script: |
+            set -e
+            cd /opt/pandora/nginx
+
+            echo "🌐 Garantindo a rede pandora_net..."
+            docker network inspect pandora_net >/dev/null 2>&1 || docker network create pandora_net
+
+            echo "🔧 Subindo certbot + nginx..."
+            docker compose up -d --build
+
+            echo "🧹 Limpando imagens antigas..."
+            docker image prune -f
+
+      - name: Smoke check — borda respondendo
+        run: |
+          sleep 10
+          app=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://app.project-pandora.com.br/)
+          api=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 https://api.project-pandora.com.br/)
+          echo "app: $app | api: $api"
+          # 000 = TLS/conexão quebrada; 5xx = gateway ou upstream fora
+          [ "$app" != "000" ] && [ "$app" -lt 500 ] && [ "$api" != "000" ] && [ "$api" -lt 500 ]
+
+      - name: Resumo
+        run: echo "✅ Gateway no ar — ref ${{ github.event.release.tag_name || github.ref }}"
