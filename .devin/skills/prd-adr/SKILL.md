@@ -56,7 +56,8 @@ O problema concreto, com o comportamento observado hoje.
 3. Consultar `../pandora-docs/prd/NG-02-hardening-da-borda.md` como
    referência de tom.
 4. Adicionar linha na tabela de `../pandora-docs/prd/README.md`.
-5. Commitar no `pandora-docs` (mesmo padrão de branch/commit dos demais).
+5. Commitar **direto na `main` do `pandora-docs`** (repo de docs é trunk
+   puro, sem branch/PR).
 
 ## ADR — procedimento
 
