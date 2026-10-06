@@ -18,4 +18,4 @@ outra ou alinhe com o responsável.
 
 | Feature | Área afetada | Branch | Sessão | Desde |
 |---|---|---|---|---|
-| — | — | — | — | — |
+| BE-27: negar /internal/ na borda (fila Juvia) | `nginx/backend.conf` | `feat/deny-internal-routes` | devin | 2026-10 |
